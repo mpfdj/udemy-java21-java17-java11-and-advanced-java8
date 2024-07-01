@@ -2,13 +2,12 @@ package lets_get_certified.streams;
 
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.Comparator.comparing;
 
 public class ReduceCollectExampleTest {
 
@@ -67,25 +66,57 @@ public class ReduceCollectExampleTest {
         personStartsWithK.ifPresent(p -> System.out.println("personStartsWithK: " + p));
 
 
-
         // stream() is a default method in the Collection interface and therefore
         // is inherited by all classes that implement Collection. Map is NOT one
         // of those i.e. Map is not a Collection. To bridge between the two, we
         // use the Map method entrySet() to return a Set view of the Map (Set
         // IS-A Collection).
 
-        Map<String, Integer> nameAgeMap = new HashMap<>();
-        nameAgeMap.put("Miel", 43);
-        nameAgeMap.put("Efril", 41);
-        nameAgeMap.put("Kim", 14);
-        nameAgeMap.put("Bella", 10);
 
-        Stream<Map.Entry<String, Integer>> nameAgeStream = nameAgeMap.entrySet().stream();
-        Map<String, Integer> nameAgeMapFiltered = nameAgeStream
+        Supplier<Stream<Map.Entry<String, Integer>>> nameAgeSupplier = () -> {
+            Map<String, Integer> nameAgeMap = new HashMap<>();
+            nameAgeMap.put("Miel", 43);
+            nameAgeMap.put("Efril", 41);
+            nameAgeMap.put("Kim", 14);
+            nameAgeMap.put("Bella", 10);
+            return nameAgeMap.entrySet().stream();
+        };
+
+        Map<String, Integer> nameAgeMapFiltered = nameAgeSupplier.get()
                 .filter(e -> e.getValue() >= 18)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 //                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         System.out.println("nameAgeMapFiltered: " + nameAgeMapFiltered);
+
+
+        Map<String, Integer> nameAgeMapSorted = nameAgeSupplier.get()
+                .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
+                .collect(Collectors.toMap(
+                        e -> e.getKey(),
+                        e -> e.getValue(),
+                        (e1, e2) -> e1,
+                        LinkedHashMap::new));
+        System.out.println("nameAgeMapSorted: " + nameAgeMapSorted);
+
+
+        // How to Sort a Stream in Java
+        // https://howtodoinjava.com/java8/stream-sorting/
+        Set<String> set = Set.of("Miel", "Efril", "Kim", "Bella");
+        Set<String> setSorted = set.stream()
+                .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toCollection(TreeSet::new));
+
+        System.out.println(set);
+        System.out.println(setSorted);
+
+
+
+        personStream = personSupplier.get();
+        List<Person> personListSortedByFirstname = personStream
+                .sorted(comparing(Person::firstname).reversed())
+                .toList();
+        System.out.println("personListSortedByFirstname: " + personListSortedByFirstname);
+
     }
 
 
